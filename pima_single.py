@@ -19,7 +19,7 @@ if __name__ == '__main__':
     print(x_train_min)
     print(x_train_max)
     enc_neuron_num = 512
-    per_class_neuron_num = 6
+    per_class_neuron_num = 1
 
     for i in range(feature_num):
         enc_layer.append(encoder.GaussianEncoder(x_train_min[i], x_train_max[i], enc_neuron_num, 'cuda:0'))

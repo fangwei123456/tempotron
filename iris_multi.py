@@ -4,6 +4,7 @@ import node
 import torch
 import numpy as np
 import math
+import sys
 if __name__ == '__main__':
     iris = datasets.load_iris()  # 字典，iris.data为特征，iris.target为类别
     # print(iris['data'].shape)  # [150,4]
@@ -29,13 +30,18 @@ if __name__ == '__main__':
     W = torch.rand(size=[3*per_class_neuron_num, enc_neuron_num*4]).cuda()  # W[i]表示enc_layer与dec_layer[i]的连接权重
     learn_rate = 0.1
     train_times = 0
-    t_spike = torch.zeros(size=[150, 4, enc_neuron_num], dtype=torch.float).cuda()
-    # 生成脉冲
-    for m in range(150):  # 编码过程非常慢
-        print(m)
-        for i in range(4):
-            t_spike[m][i] = enc_layer[i].encode(x_train[m][i], 500)[0]  # [1, enc_neuron_num]的tensor
-    t_spike = t_spike.view(150, -1)
+    try:
+        t_spike = torch.load('iris' + str(enc_neuron_num) + '.pkl', map_location=x_train.device)
+    except BaseException:
+        t_spike = torch.zeros(size=[150, 4, enc_neuron_num], dtype=torch.float).cuda()
+        # 生成脉冲
+        for m in range(150):  # 编码过程非常慢
+            print(m)
+            for i in range(4):
+                t_spike[m][i] = enc_layer[i].encode(x_train[m][i], 500)[0]  # [1, enc_neuron_num]的tensor
+        t_spike = t_spike.view(150, -1)
+        torch.save(t_spike, 'iris' + str(enc_neuron_num) + '.pkl')
+
 
     min_error_rate = 1
     read_seq = np.random.permutation(150)
@@ -83,9 +89,10 @@ if __name__ == '__main__':
                 if pred_class != real_class:
                     error_times += 1
 
-            error_rate = error_times / 150
+            error_rate = error_times / 15
             if error_rate < min_error_rate:
                 min_error_rate = error_rate
+            print(sys.argv)
             print("测试错误率", error_rate)
             print("最小错误率", min_error_rate)
             print(W)

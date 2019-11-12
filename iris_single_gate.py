@@ -19,7 +19,7 @@ if __name__ == '__main__':
     print(x_train_min)
     print(x_train_max)
     enc_neuron_num = 4096
-    per_class_neuron_num = 16
+    per_class_neuron_num = 1
     # [0, per_class_neuron_num-1]对应第0类，[per_class_neuron_num, 2*per_class_neuron_num-1]对应第1类，[2*per_class_neuron_num, 3*per_class_neuron_num-1]对应第2类
     for i in range(4):
         enc_layer.append(encoder.GaussianEncoder(x_train_min[i], x_train_max[i], enc_neuron_num, 'cuda:0'))
