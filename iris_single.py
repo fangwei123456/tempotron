@@ -5,6 +5,26 @@ import torch
 import numpy as np
 import math
 import sys
+'''
+iris数据集，150个样本，[0,50)为0类，[50,100)为1类，[100,150)为2类
+分成10折
+第0折包含[0,5),[50,55),[100,105)
+第1折包含[5,10),[55,60),[105,110)
+以此类推
+'''
+
+def get_k_fold(i):
+    # 将样本分成10份，取第i份为测试集，其余为训练集，返回训练集和测试集的标号
+    test_i = torch.arange(i*5, i*5+5)
+    test_i = torch.cat([test_i, test_i + 50, test_i + 100])
+    train_i = []
+    for ii in range(10):
+        if ii != i:
+            temp_i = torch.arange(ii*5, ii*5+5)
+            train_i.append(torch.cat([temp_i, temp_i + 50, temp_i + 100]))
+    train_i = torch.cat(train_i)
+    return train_i.tolist(), test_i.tolist()
+
 if __name__ == '__main__':
     iris = datasets.load_iris()  # 字典，iris.data为特征，iris.target为类别
     # print(iris['data'].shape)  # [150,4]
@@ -44,10 +64,10 @@ if __name__ == '__main__':
 
 
     min_error_rate = 1
-    read_seq = np.random.permutation(150)
+    train_i, test_i = get_k_fold(1)
 
     while 1:
-        m = read_seq[np.random.randint(low=0, high=135)]  # 随机抽取一个数据
+        m = train_i[np.random.randint(low=0, high=135)]  # 随机抽取一个数据
         real_class = y_train[m].item()  # 真实的类别
 
         for i in range(3*per_class_neuron_num):
@@ -73,7 +93,7 @@ if __name__ == '__main__':
         if train_times % 128 == 0:
             # 测试一次
             error_times = 0
-            for m in read_seq[135:150]:
+            for m in test_i:
                 real_class = y_train[m].item()  # 真实的类别
                 # 比较每一个分类器的输出结果
                 vote_result = torch.zeros([3], dtype=torch.float).cuda()

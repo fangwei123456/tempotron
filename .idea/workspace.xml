@@ -2,11 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="04f208a9-9623-4da9-b167-b33ac9d7e046" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/iris_multi.py" beforeDir="false" afterPath="$PROJECT_DIR$/iris_multi.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/iris_multi_gate.py" beforeDir="false" afterPath="$PROJECT_DIR$/iris_multi_gate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/iris_single.py" beforeDir="false" afterPath="$PROJECT_DIR$/iris_single.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/iris_single_gate.py" beforeDir="false" afterPath="$PROJECT_DIR$/iris_single_gate.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pima_multi.py" beforeDir="false" afterPath="$PROJECT_DIR$/pima_multi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pima_multi_gate.py" beforeDir="false" afterPath="$PROJECT_DIR$/pima_multi_gate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pima_single.py" beforeDir="false" afterPath="$PROJECT_DIR$/pima_single.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -212,7 +215,7 @@
       <workItem from="1573110446276" duration="29115000" />
       <workItem from="1573447004301" duration="20977000" />
       <workItem from="1573555851911" duration="2686000" />
-      <workItem from="1573558960227" duration="4089000" />
+      <workItem from="1573558960227" duration="10905000" />
     </task>
     <servers />
   </component>

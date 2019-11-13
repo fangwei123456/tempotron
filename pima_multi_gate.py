@@ -6,6 +6,19 @@ import numpy as np
 import math
 import torch.nn.functional as F
 import sys
+'''
+pima数据集，768个样本，取前500个
+'''
+
+def get_k_fold(i):
+    # 将样本分成10份，取第i份为测试集，其余为训练集，返回训练集和测试集的标号
+    test_i = torch.arange(i*50, i*50+50)
+    train_i = []
+    for ii in range(10):
+        if ii != i:
+            train_i.append(torch.arange(ii*50, ii*50+50))
+    train_i = torch.cat(train_i)
+    return train_i.tolist(), test_i.tolist()
 if __name__ == '__main__':
     pima = np.loadtxt('pima-indians-diabetes.csv', skiprows=1, delimiter=',')  # 最后一列为分类
     data_num = pima.shape[0]
@@ -46,10 +59,10 @@ if __name__ == '__main__':
         torch.save(t_spike, 'pima-indians-diabetes-' + str(enc_neuron_num) + '.pkl')
 
     min_error_rate = 1
-    read_seq = np.random.permutation(data_num)
+    train_i, test_i = get_k_fold(1)
 
     while 1:
-        m = read_seq[np.random.randint(low=0, high=data_num * 9 // 10)]  # 随机抽取一个数据
+        m = train_i[np.random.randint(low=0, high=450)]  # 随机抽取一个数据
         real_class = y_train[m].item()  # 真实的类别
 
         for i in range(class_num*per_class_neuron_num):
@@ -84,7 +97,7 @@ if __name__ == '__main__':
         if train_times % 128 == 0:
             # 测试一次
             error_times = 0
-            for m in read_seq[data_num * 9 // 10: data_num]:
+            for m in test_i:
                 real_class = y_train[m].item()  # 真实的类别
                 # 比较每一个分类器的输出结果
                 vote_result = torch.zeros([class_num], dtype=torch.float).cuda()
@@ -100,7 +113,7 @@ if __name__ == '__main__':
                 if pred_class != real_class:
                     error_times += 1
 
-            error_rate = error_times / (data_num - data_num * 9 // 10)
+            error_rate = error_times / 50
             if error_rate < min_error_rate:
                 min_error_rate = error_rate
             print(sys.argv)
