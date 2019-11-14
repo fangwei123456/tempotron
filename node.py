@@ -31,13 +31,21 @@ class LIFNode:
         self.T = T # 运行时长
         self.N = N # 输入的数量
         self.device = device
-        self.t = torch.arange(start=0, end=T, device=self.device).float().repeat([N, 1]) # shape=[N, T]
-    def calculate_membrane_potentials(self, W, t_spike):
+        self.t = torch.arange(start=0, end=T, device=self.device).float().repeat([N, 1])  # shape=[N, T]
+    def calculate_membrane_potentials(self, W, t_spike, Bias=None):
         """
         W和t_spike都是shape=[N]的tensor
         并行计算出一次仿真的所有结果，self.v是一个shape=[T]的tensor
         """
-        self.v = torch.sum(W.view(-1, 1) * psp_kernel(self.t - t_spike.view(-1, 1), self.v0, self.tau, self.tau_s), dim=0)
+        if Bias is not None:
+            # Bias shape=[N]，而W.view(-1, 1) * psp_kernel(self.t - t_spike.view(-1, 1), self.v0, self.tau, self.tau_s) shape=[N, T]
+            delta_t = self.t - t_spike.view(-1, 1)
+            self.v = torch.sum(W.view(-1, 1) * (psp_kernel(delta_t, self.v0, self.tau, self.tau_s) +
+                                                Bias.unsqueeze(1).repeat([1, self.T]) * (delta_t > 0).float()), dim=0)
+        else:
+            self.v = torch.sum(W.view(-1, 1) * psp_kernel(self.t - t_spike.view(-1, 1), self.v0, self.tau, self.tau_s), dim=0)
+
+
 
 """
 测试代码

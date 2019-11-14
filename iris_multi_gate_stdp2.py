@@ -64,7 +64,7 @@ if __name__ == '__main__':
     learn_rate = 0.1
     stdp_learn_rate = 1
     A_LTD = 0.02656
-    C_ = 0.0001
+    C_ = 0.000
     A_LTP = C_ * A_LTD
     tau_LTP = 16.8
     tau_LTD = 33.7

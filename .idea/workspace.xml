@@ -5,11 +5,17 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/iris_multi.py" beforeDir="false" afterPath="$PROJECT_DIR$/iris_multi.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/iris_multi_gate.py" beforeDir="false" afterPath="$PROJECT_DIR$/iris_multi_gate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/iris_multi_gate_stdp.py" beforeDir="false" afterPath="$PROJECT_DIR$/iris_multi_gate_stdp.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/iris_single.py" beforeDir="false" afterPath="$PROJECT_DIR$/iris_single.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/iris_single_gate.py" beforeDir="false" afterPath="$PROJECT_DIR$/iris_single_gate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/node.py" beforeDir="false" afterPath="$PROJECT_DIR$/node.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pima_multi.py" beforeDir="false" afterPath="$PROJECT_DIR$/pima_multi.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pima_multi_gate.py" beforeDir="false" afterPath="$PROJECT_DIR$/pima_multi_gate.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pima_single.py" beforeDir="false" afterPath="$PROJECT_DIR$/pima_single.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pima_single_gate.py" beforeDir="false" afterPath="$PROJECT_DIR$/pima_single_gate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/~$实验结果.docx" beforeDir="false" afterPath="$PROJECT_DIR$/~$实验结果.docx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/实验结果.docx" beforeDir="false" afterPath="$PROJECT_DIR$/实验结果.docx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/实验结果.xlsx" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -28,10 +34,17 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectId" id="1TBsvhJrhhCNaKSTJHgWBACOsZh" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="true" />
+    <property name="WebServerToolWindowPanel.toolwindow.highlight.mappings" value="true" />
+    <property name="WebServerToolWindowPanel.toolwindow.highlight.symlinks" value="true" />
+    <property name="WebServerToolWindowPanel.toolwindow.show.date" value="false" />
+    <property name="WebServerToolWindowPanel.toolwindow.show.permissions" value="false" />
+    <property name="WebServerToolWindowPanel.toolwindow.show.size" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="RecentsManager">
@@ -215,7 +228,8 @@
       <workItem from="1573110446276" duration="29115000" />
       <workItem from="1573447004301" duration="20977000" />
       <workItem from="1573555851911" duration="2686000" />
-      <workItem from="1573558960227" duration="10905000" />
+      <workItem from="1573558960227" duration="19910000" />
+      <workItem from="1573634578738" duration="20081000" />
     </task>
     <servers />
   </component>
@@ -227,7 +241,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>

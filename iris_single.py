@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
 
     min_error_rate = 1
-    train_i, test_i = get_k_fold(1)
+    train_i, test_i = get_k_fold(int(sys.argv[1]))
 
     while 1:
         m = train_i[np.random.randint(low=0, high=135)]  # 随机抽取一个数据

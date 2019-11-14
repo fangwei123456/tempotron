@@ -4,11 +4,14 @@ import node
 import torch
 import numpy as np
 import math
-import torch.nn.functional as F
 import sys
 '''
 pima数据集，768个样本，取前500个
 '''
+"""
+增加如下学习规则
+t_max时刻后产生脉冲的输入的权重也被改变，改变规则与t_max时刻前产生脉冲的权重改变规则相同
+"""
 
 def get_k_fold(i):
     # 将样本分成10份，取第i份为测试集，其余为训练集，返回训练集和测试集的标号
@@ -20,6 +23,7 @@ def get_k_fold(i):
     train_i = torch.cat(train_i)
     return train_i.tolist(), test_i.tolist()
 if __name__ == '__main__':
+    torch.cuda.set_device(int(sys.argv[2]))
     pima = np.loadtxt('pima-indians-diabetes.csv', skiprows=1, delimiter=',')  # 最后一列为分类
     data_num = pima.shape[0]
     class_num = 2
@@ -36,14 +40,13 @@ if __name__ == '__main__':
     per_class_neuron_num = 6
 
     for i in range(feature_num):
-        enc_layer.append(encoder.GaussianEncoder(x_train_min[i], x_train_max[i], enc_neuron_num, 'cuda:0'))
+        enc_layer.append(encoder.GaussianEncoder(x_train_min[i], x_train_max[i], enc_neuron_num, 'cuda:' + sys.argv[2]))
     # 共有class_num类，需要class_num个tempotron
     dec_layer = []
     for i in range(class_num*per_class_neuron_num):
-        dec_layer.append(node.LIFNode(tau=15.0, tau_s=15.0/4, v_rest=0, T=500, N=enc_neuron_num*feature_num, device='cuda:0'))  # 由于是全连接，因此enc_layer的所有元素都与这个节点相连
+        dec_layer.append(node.LIFNode(tau=15.0, tau_s=15.0/4, v_rest=0, T=500, N=enc_neuron_num*feature_num, device='cuda:' + sys.argv[2]))  # 由于是全连接，因此enc_layer的所有元素都与这个节点相连
 
     W = torch.rand(size=[class_num*per_class_neuron_num, enc_neuron_num*feature_num]).cuda()  # W[i]表示enc_layer与dec_layer[i]的连接权重
-    B = torch.rand(size=[class_num*per_class_neuron_num, enc_neuron_num*feature_num]).cuda()
     learn_rate = 0.1
     train_times = 0
     try:
@@ -69,26 +72,25 @@ if __name__ == '__main__':
             # 分别送入dec_layer的每一个class
             neural_class = i // per_class_neuron_num  # 表示这个神经元应该对哪一类响应1
             neural_seq = i % per_class_neuron_num
-            Gi = F.sigmoid(B[i])
-            dec_layer[i].calculate_membrane_potentials(W[i] * Gi, t_spike[m])
+            dec_layer[i].calculate_membrane_potentials(W[i], t_spike[m])
             t_max = dec_layer[i].v.argmax()
             # 训练第i个分类器
             if neural_class == real_class:
                 # 应该放电
                 if dec_layer[i].v[t_max] < dec_layer[i].v_thr:
-                    v_error = node.psp_kernel(t_max - t_spike[m], dec_layer[i].v0, dec_layer[i].tau, dec_layer[i].tau_s)
-                    dW = Gi * v_error
-                    dB = W[i] * v_error * Gi * (1 - Gi)
-                    W[i] += learn_rate * dW
-                    B[i] += learn_rate * dB
+                    W[i] += learn_rate * node.psp_kernel(t_max - t_spike[m], dec_layer[i].v0, dec_layer[i].tau, dec_layer[i].tau_s)
+                    W[i] += learn_rate * node.psp_kernel(t_spike[m] - t_max, dec_layer[i].v0, dec_layer[i].tau, dec_layer[i].tau_s)
+
+                    """
+                    增加如下学习规则
+                    t_max时刻后产生脉冲的输入的权重也被改变，改变规则与t_max时刻前产生脉冲的权重改变规则相同
+                    """
+
             else:
                 # 不应该放电
                 if dec_layer[i].v[t_max] > dec_layer[i].v_thr:
-                    v_error = node.psp_kernel(t_max - t_spike[m], dec_layer[i].v0, dec_layer[i].tau, dec_layer[i].tau_s)
-                    dW = Gi * v_error
-                    dB = W[i] * v_error * Gi * (1 - Gi)
-                    W[i] -= learn_rate * dW
-                    B[i] -= learn_rate * dB
+                    W[i] -= learn_rate * node.psp_kernel(t_max - t_spike[m], dec_layer[i].v0, dec_layer[i].tau, dec_layer[i].tau_s)
+                    W[i] -= learn_rate * node.psp_kernel(t_spike[m] - t_max, dec_layer[i].v0, dec_layer[i].tau, dec_layer[i].tau_s)
             # 计算第i个分类器的错误率
 
 
@@ -104,7 +106,7 @@ if __name__ == '__main__':
                 # vote_result[0]记录的是此类属于第0类的票数
                 for i in range(class_num*per_class_neuron_num):
                     # 分别送入dec_layer的每一个class
-                    dec_layer[i].calculate_membrane_potentials(W[i] * F.sigmoid(B[i]), t_spike[m])
+                    dec_layer[i].calculate_membrane_potentials(W[i], t_spike[m])
                     t_max = dec_layer[i].v.argmax()
                     if dec_layer[i].v[t_max] > dec_layer[i].v_thr:
                         vote_result[i // per_class_neuron_num] += 1
@@ -117,11 +119,9 @@ if __name__ == '__main__':
             if error_rate < min_error_rate:
                 min_error_rate = error_rate
             print(sys.argv)
-
             print("测试错误率", error_rate)
             print("最小错误率", min_error_rate)
             print(W)
-            print(B)
 
 
         train_times += 1

@@ -64,7 +64,7 @@ if __name__ == '__main__':
         torch.save(t_spike, 'iris' + str(enc_neuron_num) + '.pkl')
     min_error_rate = 1
     train_times = 0
-    train_i, test_i = get_k_fold(1)
+    train_i, test_i = get_k_fold(int(sys.argv[1]))
 
     while True:
 

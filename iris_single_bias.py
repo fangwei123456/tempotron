@@ -4,7 +4,6 @@ import node
 import torch
 import numpy as np
 import math
-import torch.nn.functional as F
 import sys
 '''
 iris数据集，150个样本，[0,50)为0类，[50,100)为1类，[100,150)为2类
@@ -13,7 +12,6 @@ iris数据集，150个样本，[0,50)为0类，[50,100)为1类，[100,150)为2�
 第1折包含[5,10),[55,60),[105,110)
 以此类推
 '''
-# 使用stdp进行门控的学习
 
 def get_k_fold(i):
     # 将样本分成10份，取第i份为测试集，其余为训练集，返回训练集和测试集的标号
@@ -27,20 +25,12 @@ def get_k_fold(i):
     train_i = torch.cat(train_i)
     return train_i.tolist(), test_i.tolist()
 
-def stdp_learning(A_LTP, A_LTD, tau_LTP, tau_LTD, t_i, t_j):
-    # 在本实验中，t_j的shape=[1]，而t_i的shape=[N]
-    delta_t = t_j - t_i
-    dW_LTP = A_LTP * torch.exp(- (delta_t > 0).float() * delta_t / tau_LTP)
-    dW_LTD = -A_LTD * torch.exp((delta_t < 0).float() * delta_t / tau_LTD)
-    return dW_LTP + dW_LTD
-
-
-
 if __name__ == '__main__':
     torch.cuda.set_device(int(sys.argv[2]))
     iris = datasets.load_iris()  # 字典，iris.data为特征，iris.target为类别
     # print(iris['data'].shape)  # [150,4]
     # print(iris['target'].shape) # [150]
+
     x_train = torch.from_numpy(iris['data']).float().cuda()
     y_train = torch.from_numpy(iris['target']).cuda()
     # 4个特征，需要4组编码器
@@ -50,7 +40,7 @@ if __name__ == '__main__':
     print(x_train_min)
     print(x_train_max)
     enc_neuron_num = 4096
-    per_class_neuron_num = 16
+    per_class_neuron_num = 1
     # [0, per_class_neuron_num-1]对应第0类，[per_class_neuron_num, 2*per_class_neuron_num-1]对应第1类，[2*per_class_neuron_num, 3*per_class_neuron_num-1]对应第2类
     for i in range(4):
         enc_layer.append(encoder.GaussianEncoder(x_train_min[i], x_train_max[i], enc_neuron_num, 'cuda:' + sys.argv[2]))
@@ -60,19 +50,11 @@ if __name__ == '__main__':
         dec_layer.append(node.LIFNode(tau=15.0, tau_s=15.0/4, v_rest=0, T=500, N=enc_neuron_num*4, device='cuda:' + sys.argv[2]))  # 由于是全连接，因此enc_layer的所有元素都与这个节点相连
 
     W = torch.rand(size=[3*per_class_neuron_num, enc_neuron_num*4]).cuda()  # W[i]表示enc_layer与dec_layer[i]的连接权重
-    B = torch.rand(size=[3*per_class_neuron_num, enc_neuron_num*4]).cuda()
+    Bias = torch.rand(size=[3*per_class_neuron_num, enc_neuron_num*4]).cuda() / 1024
+    Bias_learn_tate = 1e-4
+
     learn_rate = 0.1
-    stdp_learn_rate = 1
-    A_LTD = 0.02656
-    C_ = 0.0001
-    A_LTP = C_ * A_LTD
-    tau_LTP = 16.8
-    tau_LTD = 33.7
-
-
-
-
-
+    train_times = 0
     try:
         t_spike = torch.load('iris' + str(enc_neuron_num) + '.pkl', map_location=x_train.device)
     except BaseException:
@@ -84,50 +66,38 @@ if __name__ == '__main__':
                 t_spike[m][i] = enc_layer[i].encode(x_train[m][i], 500)[0]  # [1, enc_neuron_num]的tensor
         t_spike = t_spike.view(150, -1)
         torch.save(t_spike, 'iris' + str(enc_neuron_num) + '.pkl')
+
+
     min_error_rate = 1
-    train_times = 0
     train_i, test_i = get_k_fold(int(sys.argv[1]))
 
-    while True:
-
+    while 1:
         m = train_i[np.random.randint(low=0, high=135)]  # 随机抽取一个数据
         real_class = y_train[m].item()  # 真实的类别
 
         for i in range(3*per_class_neuron_num):
             # 分别送入dec_layer的每一个class
-
             neural_class = i // per_class_neuron_num  # 表示这个神经元应该对哪一类响应1
             neural_seq = i % per_class_neuron_num
-            Gi = F.sigmoid(B[i])
-            dec_layer[i].calculate_membrane_potentials(W[i] * Gi, t_spike[m])
+            dec_layer[i].calculate_membrane_potentials(W[i], t_spike[m], Bias[i])
             t_max = dec_layer[i].v.argmax()
             # 训练第i个分类器
             if neural_class == real_class:
                 # 应该放电
                 if dec_layer[i].v[t_max] < dec_layer[i].v_thr:
                     v_error = node.psp_kernel(t_max - t_spike[m], dec_layer[i].v0, dec_layer[i].tau, dec_layer[i].tau_s)
-                    dW = Gi * v_error
-                    W[i] += learn_rate * dW
-
-
+                    Bias[i] += Bias_learn_tate * W[i]
+                    W[i] += learn_rate * v_error
 
             else:
                 # 不应该放电
                 if dec_layer[i].v[t_max] > dec_layer[i].v_thr:
                     v_error = node.psp_kernel(t_max - t_spike[m], dec_layer[i].v0, dec_layer[i].tau, dec_layer[i].tau_s)
-                    dW = Gi * v_error
-                    W[i] -= learn_rate * dW
-
-            # STDP学习门控
-            # 计算所有大于阈值的时间
-            t_j_spike = (dec_layer[i].v > dec_layer[i].v_thr).float() * torch.arange(0, 500, device=dec_layer[i].v.device).float()
-            for t_ in t_j_spike:
-                dB = stdp_learning(A_LTP, A_LTD, tau_LTP, tau_LTD, t_spike[m], t_)
-                B[i] += stdp_learn_rate * dB
+                    Bias[i] -= Bias_learn_tate * W[i]
+                    W[i] -= learn_rate * v_error
 
 
-        if train_times % 16 == 0:
-            print(train_times)
+
 
 
 
@@ -141,7 +111,7 @@ if __name__ == '__main__':
                 # vote_result[0]记录的是此类属于第0类的票数
                 for i in range(3*per_class_neuron_num):
                     # 分别送入dec_layer的每一个class
-                    dec_layer[i].calculate_membrane_potentials(W[i] * F.sigmoid(B[i]), t_spike[m])
+                    dec_layer[i].calculate_membrane_potentials(W[i], t_spike[m], Bias[i])
                     t_max = dec_layer[i].v.argmax()
                     if dec_layer[i].v[t_max] > dec_layer[i].v_thr:
                         vote_result[i // per_class_neuron_num] += 1
@@ -157,7 +127,7 @@ if __name__ == '__main__':
             print("测试错误率", error_rate)
             print("最小错误率", min_error_rate)
             print(W)
-            print(F.sigmoid(B))
+            print(Bias)
 
 
         train_times += 1
